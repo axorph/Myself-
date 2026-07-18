@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kesendirian Dan Ilusi Kepedulian</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@200;300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg-alt: #111111;
+      --text: #d4d4d4;
+      --text-dim: #555555;
+      --accent: #7a7a7a;
+      --accent-warm: #a08060;
+      --border: #1f1f1f;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Cormorant Garamond', serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Canvas Background */
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Main Container */
+    .main-container {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+    }
+
+    /* Hero Section */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 300;
+      letter-spacing: 0.15em;
+      color: #e8e8e8;
+      margin-bottom: 1rem;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeUp 2s ease-out forwards;
+    }
+
+    .hero-subtitle {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 200;
+      letter-spacing: 0.3em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 3rem;
+      opacity: 0;
+      animation: fadeUp 2s ease-out 0.5s forwards;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 3rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      animation: fadeUp 2s ease-out 1.5s forwards;
+    }
+
+    .scroll-indicator span {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--text-dim), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+
+    /* Poem Section */
+    .poem-section {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 6rem 2rem;
+      position: relative;
+    }
+
+    .poem-stanza {
+      margin-bottom: 4rem;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .poem-stanza.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .poem-line {
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      font-weight: 300;
+      line-height: 2.2;
+      color: var(--text);
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+
+    .poem-line.highlight {
+      color: #c0a080;
+      font-style: italic;
+    }
+
+    .stanza-divider {
+      width: 30px;
+      height: 1px;
+      background: var(--border);
+      margin: 3rem auto;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .stanza-divider.visible {
+      opacity: 1;
+    }
+
+    /* Chorus Section - Special Styling */
+    .chorus-section {
+      background: linear-gradient(180deg, transparent 0%, rgba(20,20,20,0.5) 30%, rgba(20,20,20,0.5) 70%, transparent 100%);
+      padding: 4rem 2rem;
+      margin: 4rem 0;
+    }
+
+    .chorus-line {
+      font-size: clamp(1.3rem, 3vw, 2rem);
+      font-weight: 300;
+      line-height: 2.5;
+      text-align: center;
+      color: #b0b0b0;
+      letter-spacing: 0.05em;
+      opacity: 0;
+      transform: scale(0.95);
+      transition: all 0.8s ease;
+    }
+
+    .chorus-line.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .chorus-line.refrain {
+      color: #c8c8c8;
+      font-weight: 400;
+    }
+
+    /* Dilemma Cards */
+    .dilemma-section {
+      padding: 6rem 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .dilemma-title {
+      font-size: 0.8rem;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .dilemma-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+    }
+
+    .dilemma-card {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dilemma-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(160,128,96,0.05) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .dilemma-card:hover::before {
+      opacity: 1;
+    }
+
+    .dilemma-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .dilemma-card:hover {
+      border-color: #333;
+      transform: translateY(-5px);
+    }
+
+    .dilemma-icon {
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      opacity: 0.6;
+    }
+
+    .dilemma-text {
+      font-size: 1.1rem;
+      font-style: italic;
+      line-height: 1.8;
+      color: #999;
+    }
+
+    /* Ending Section */
+    .ending-section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 4rem 2rem;
+      position: relative;
+    }
+
+    .ending-quote {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 300;
+      font-style: italic;
+      line-height: 1.8;
+      color: #c0a080;
+      max-width: 600px;
+      margin-bottom: 3rem;
+      opacity: 0;
+      transition: opacity 2s ease;
+    }
+
+    .ending-quote.visible {
+      opacity: 1;
+    }
+
+    .ending-author {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 2s ease 0.5s;
+    }
+
+    .ending-author.visible {
+      opacity: 1;
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(1.3); }
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .poem-section { padding: 4rem 1.5rem; }
+      .dilemma-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="particle-canvas"></canvas>
+
+  <div class="main-container">
+    <!-- Hero -->
+    <section class="hero">
+      <h1 class="hero-title">Kesendirian Dan Ilusi Kepedulian</h1>
+      <p class="hero-subtitle">a poem about solitude</p>
+      <div class="scroll-indicator">
+        <span>scroll</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- Poem Body -->
+    <section class="poem-section">
+      <div class="poem-stanza" data-delay="0">
+        <p class="poem-line">Tonight, I finally realized that nobody really gives a shit</p>
+        <p class="poem-line">I mean, I know it sounds harsh but often that's what reality is</p>
+      </div>
+
+      <div class="stanza-divider"></div>
+
+      <div class="poem-stanza" data-delay="100">
+        <p class="poem-line">You see, it started out slowly</p>
+        <p class="poem-line">Notifications on my phone became an uncommon occurrence</p>
+        <p class="poem-line">Sometimes my presence felt as though it was testing others' endurance</p>
+      </div>
+
+      <div class="stanza-divider"></div>
+
+      <div class="poem-stanza" data-delay="200">
+        <p class="poem-line">So I wondered if there was a remedy</p>
+        <p class="poem-line">A remedy for this isolation I began to feel</p>
+        <p class="poem-line">So I adapted</p>
+      </div>
+
+      <div class="stanza-divider"></div>
+
+      <div class="poem-stanza" data-delay="300">
+        <p class="poem-line">I got louder in conversations so I wouldn't get drowned out</p>
+        <p class="poem-line">I didn't tell if they asked how I was because what if they found out</p>
+        <p class="poem-line">It's not like they'd care</p>
+        <p class="poem-line">I mean, they would just judge, and then not be there</p>
+      </div>
+
+      <div class="stanza-divider"></div>
+
+      <div class="poem-stanza" data-delay="400">
+        <p class="poem-line">But that's okay</p>
+        <p class="poem-line">Because that's just how it goes</p>
+      </div>
+
+      <div class="stanza-divider"></div>
+
+      <div class="poem-stanza" data-delay="500">
+        <p class="poem-line">Then it started going quicker</p>
+        <p class="poem-line">Caring eyes strayed away from me</p>
+        <p class="poem-line">It felt as though there was no remedy</p>
+        <p class="poem-line">I longed to be held, but instead, I was shunned</p>
+        <p class="poem-line">But it's okay because he has so many invisible people out there for him</p>
+      </div>
+
+      <div class="stanza-divider"></div>
+
+      <div class="poem-stanza" data-delay="600">
+        <p class="poem-line">Lonely nights became far too common</p>
+        <p class="poem-line">I was painfully aware of my own thoughts</p>
+        <p class="poem-line">A few said that they would be there for me</p>
+        <p class="poem-line">But instead, I just turned to my pen</p>
+      </div>
+
+      <div class="stanza-divider"></div>
+
+      <div class="poem-stanza" data-delay="700">
+        <p class="poem-line">And you know why</p>
+        <p class="poem-line">Because I guarantee</p>
+        <p class="poem-line highlight">If I stopped texting them first, I would never hear from them again</p>
+      </div>
+    </section>
+
+    <!-- Chorus -->
+    <section class="chorus-section">
+      <p class="chorus-line refrain" data-order="0">I'm so alone</p>
+      <p class="chorus-line" data-order="1">I'm so alone</p>
+      <p class="chorus-line" data-order="2">The empty lightbulb has burnt out</p>
+      <p class="chorus-line" data-order="3">And the tears in my eyes refuse to leak out</p>
+      <p class="chorus-line refrain" data-order="4">I'm so alone</p>
+      <p class="chorus-line" data-order="5">I'm so alone</p>
+      <p class="chorus-line" data-order="6">I'm so alone</p>
+      <p class="chorus-line" data-order="7">I'm so alone</p>
+      <p class="chorus-line" data-order="8">I'm so alone</p>
+      <p class="chorus-line" data-order="9">I'm so alone</p>
+    </section>
+
+    <!-- Dilemma Cards -->
+    <section class="dilemma-section">
+      <p class="dilemma-title">the unspoken dilemmas</p>
+      <div class="dilemma-grid">
+        <div class="dilemma-card" data-delay="0">
+          <div class="dilemma-icon">📱</div>
+          <p class="dilemma-text">"Notifications became an uncommon occurrence"</p>
+        </div>
+        <div class="dilemma-card" data-delay="100">
+          <div class="dilemma-icon">🎭</div>
+          <p class="dilemma-text">"I got louder so I wouldn't get drowned out"</p>
+        </div>
+        <div class="dilemma-card" data-delay="200">
+          <div class="dilemma-icon">✍️</div>
+          <p class="dilemma-text">"I just turned to my pen"</p>
+        </div>
+        <div class="dilemma-card" data-delay="300">
+          <div class="dilemma-icon">💡</div>
+          <p class="dilemma-text">"The empty lightbulb has burnt out"</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ending -->
+    <section class="ending-section">
+      <p class="ending-quote">"in the end is only me"</p>
+      <p class="ending-author">— a quiet truth</p>
+    </section>
+  </div>
+
+  <script>
+    // Particle System
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let mouseX = 0, mouseY = 0;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 1.5 + 0.5;
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.speedY = (Math.random() - 0.5) * 0.3;
+        this.opacity = Math.random() * 0.4 + 0.1;
+        this.life = Math.random() * 200 + 100;
+        this.maxLife = this.life;
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.life--;
+
+        // Mouse interaction - gentle repulsion
+        const dx = this.x - mouseX;
+        const dy = this.y - mouseY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 150) {
+          const force = (150 - dist) / 150;
+          this.x += (dx / dist) * force * 0.5;
+          this.y += (dy / dist) * force * 0.5;
+        }
+
+        if (this.life <= 0 || this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+          this.reset();
+        }
+      }
+
+      draw() {
+        const alpha = (this.life / this.maxLife) * this.opacity;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(180, 180, 180, ${alpha})`;
+        ctx.fill();
+      }
+    }
+
+    // Create particles
+    for (let i = 0; i < 80; i++) {
+      particles.push(new Particle());
+    }
+
+    // Draw connections between nearby particles
+    function drawConnections() {
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 120) {
+            const alpha = (1 - dist / 120) * 0.08;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(150, 150, 150, ${alpha})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+
+      drawConnections();
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    // Scroll Observer for animations
+    const observerOptions = {
+      threshold: 0.2,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const delay = entry.target.dataset.delay || 0;
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+          }, delay);
+        }
+      });
+    }, observerOptions);
+
+    // Observe stanzas
+    document.querySelectorAll('.poem-stanza').forEach(el => observer.observe(el));
+    document.querySelectorAll('.stanza-divider').forEach(el => observer.observe(el));
+    document.querySelectorAll('.dilemma-card').forEach(el => observer.observe(el));
+
+    // Chorus animation - sequential reveal
+    const chorusObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const order = parseInt(entry.target.dataset.order);
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+          }, order * 400);
+        }
+      });
+    }, { threshold: 0.3 });
+
+    document.querySelectorAll('.chorus-line').forEach(el => chorusObserver.observe(el));
+
+    // Ending section
+    const endingObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          document.querySelector('.ending-quote').classList.add('visible');
+          setTimeout(() => {
+            document.querySelector('.ending-author').classList.add('visible');
+          }, 800);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    endingObserver.observe(document.querySelector('.ending-section'));
+  </script>
+
+</body>
+</html>
